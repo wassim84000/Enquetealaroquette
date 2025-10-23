@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Enquête à la Roquette</title>
+<style>
+  body {background-color:black;color:#1faa1f;font-family:'Courier New',Courier,monospace;overflow:hidden;margin:0;padding:0;}
+  .container {position:relative;z-index:10;text-align:center;top:28vh;}
+  input[type="text"],button {padding:10px;width:320px;font-size:16px;border-radius:4px;border:2px solid #1faa1f;background-color:black;color:#1faa1f;}
+  button {cursor:pointer;margin-left:10px;}
+  .message {margin-top:18px;font-weight:bold;font-size:26px;color:#1faa1f;min-height:40px;}
+  .hint {margin-top:18px;font-weight:bold;font-size:26px;color:#66ff66;}
+  .matrix {position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;background:black;overflow:hidden;}
+  canvas {display:block;}
+  @media(max-width:480px){input[type="text"]{width:240px;}}
+</style>
+</head>
+<body>
+<div class="matrix"><canvas id="matrix"></canvas></div>
+<div class="container">
+  <h1>ENQUÊTE À LA ROQUETTE</h1>
+  <input id="reponse" placeholder="Entre le nom de ton équipe" type="text" autocomplete="off"/>
+  <button id="validerBtn">Valider</button>
+  <div class="message" id="message"></div>
+  <div class="hint" id="hint"></div>
+</div>
+<script>
+const teams={
+  lupin:{name:"Arsène Lupin",start:"Ferme urbaine – Roquette Sud",pathPlaces:["Commerce – Boulangerie La Semoulière","Maison des Projets","Cour des Petits Débrouillards – Coupo Santo","Médiathèque Renaud Barrault"],codes:["roquette","mémoire","savoir","partage"]},
+  "inspecteur gadget":{name:"Inspecteur Gadget",start:"Ferme urbaine – Roquette Sud",pathPlaces:["Cour des Petits Débrouillards – Coupo Santo","Médiathèque Renaud Barrault","Commerce – Boulangerie La Semoulière","Maison des Projets"],codes:["savoir","partage","roquette","mémoire"]},
+  "lara croft":{name:"Lara Croft",start:"Ferme urbaine – Roquette Sud",pathPlaces:["Maison des Projets","Cour des Petits Débrouillards – Coupo Santo","Médiathèque Renaud Barrault","Commerce – Boulangerie La Semoulière"],codes:["mémoire","savoir","partage","roquette"]},
+  catwoman:{name:"Catwoman",start:"Ferme urbaine – Roquette Sud",pathPlaces:["Médiathèque Renaud Barrault","Commerce – Boulangerie La Semoulière","Maison des Projets","Cour des Petits Débrouillards – Coupo Santo"],codes:["partage","roquette","mémoire","savoir"]}
+};
+const input=document.getElementById('reponse'),btn=document.getElementById('validerBtn'),messageEl=document.getElementById('message'),hintEl=document.getElementById('hint');
+let currentTeam=null,stepIndex=0,phase='team';const badAudio=new Audio("https://www.soundjay.com/button/sounds/beep-07.mp3");
+function showSkull(){messageEl.style.fontSize="140px";messageEl.innerHTML=`<span style="font-size:96px;font-weight:300;color:#00ff00;text-shadow:0 0 8px #00ff00;">☠</span>`;try{badAudio.currentTime=0;badAudio.play();}catch(e){}hintEl.textContent="";}
+function startForTeam(k){currentTeam=teams[k];stepIndex=0;phase='codes';messageEl.style.fontSize="28px";messageEl.textContent=`Bienvenue équipe ${currentTeam.name} ! Commencez votre enquête à ${currentTeam.start}.`;hintEl.textContent=`Votre première étape : rendez-vous à ${currentTeam.pathPlaces[0]} et entrez le code trouvé là-bas.`;input.value="";input.placeholder="Entre le code trouvé sur le lieu...";}
+function advanceAfterCorrectCode(){if(stepIndex<currentTeam.pathPlaces.length-1){const next=currentTeam.pathPlaces[++stepIndex];messageEl.style.fontSize="22px";messageEl.textContent=`Code accepté ✅. Maintenant, allez à ${next}.`;hintEl.textContent=`Quand vous êtes sur place, entrez le code trouvé à ${next}.`;input.value="";}else{messageEl.style.fontSize="28px";messageEl.innerHTML=`Bravo équipe ${currentTeam.name} — dirigez-vous vers la Ferme urbaine – Roquette Sud pour la fin de l’enquête.`;hintEl.textContent="";input.value="";input.placeholder="Enquête terminée";input.disabled=true;btn.disabled=true;}}
+function verifierReponse(){const raw=input.value.toLowerCase().trim();if(!raw)return;if(phase==='team'){if(teams[raw]){startForTeam(raw);}else{showSkull();input.value="";}return;}if(!currentTeam){showSkull();input.value="";return;}const expected=currentTeam.codes[stepIndex];if(raw===expected){advanceAfterCorrectCode();}else{showSkull();input.value="";}}
+btn.addEventListener('click',verifierReponse);input.addEventListener('keypress',e=>{if(e.key==='Enter')verifierReponse();});
+const canvas=document.getElementById("matrix"),ctx=canvas.getContext("2d");function resizeCanvas(){canvas.height=window.innerHeight;canvas.width=window.innerWidth;}resizeCanvas();window.addEventListener('resize',resizeCanvas);
+const letters="01",fontSize=16;let columns=Math.floor(canvas.width/fontSize),drops=Array.from({length:columns}).fill(1);
+function drawMatrix(){ctx.fillStyle="rgba(0,0,0,0.05)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#0F0";ctx.font=fontSize+"px monospace";if(Math.floor(canvas.width/fontSize)!==columns){columns=Math.floor(canvas.width/fontSize);drops=Array.from({length:columns}).fill(1);}for(let i=0;i<drops.length;i++){const text=letters[Math.floor(Math.random()*letters.length)];ctx.fillText(text,i*fontSize,drops[i]*fontSize);if(drops[i]*fontSize>canvas.height&&Math.random()>0.975)drops[i]=0;drops[i]++;}}
+setInterval(drawMatrix,33);
+</script>
+</body>
+</html>
